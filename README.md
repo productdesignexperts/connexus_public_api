@@ -1,47 +1,51 @@
 # Connexus Public API Client
 
-A lightweight JavaScript library for integrating [connexus.team](https://connexus.team) data into your website.
+A client library for integrating [connexus.team](https://connexus.team) data into your website.
 
 ## Overview
 
-This library allows you to display Connexus community data (events, members, business listings) on your own website using a simple template-based approach. You create the HTML structure with example content, and the library replaces it with live data from Connexus.
+This library allows you to display Connexus community data (events, members, business listings) on your own website. Choose the integration method that best fits your needs:
 
-## Installation
+| Method | Best For | Rendering |
+|--------|----------|-----------|
+| **JavaScript (DOM)** | Static sites, SPAs | Client-side |
+| **PHP (cURL)** | PHP websites, WordPress | Server-side |
 
-### Option 1: CDN (Recommended)
+## Quick Links
+
+- [JavaScript Client Documentation](public_html/docs/javascript-client.md) - DOM-based template replacement
+- [PHP Integration Documentation](public_html/docs/php-integration.md) - Server-side cURL approach
+- [API Reference](public_html/docs/api-reference.md) - Complete endpoint documentation
+
+---
+
+## JavaScript Integration (Client-Side)
+
+Use this approach when you want client-side data loading with DOM template replacement.
+
+### Installation
+
 ```html
-<script src="https://api.connexus.team/v1/connexus-api.min.js"></script>
+<script src="https://clientapi.connexus.team/src/connexus-api.js"></script>
 ```
 
-### Option 2: Self-Hosted
-Download `dist/connexus-api.min.js` and include it in your project:
-```html
-<script src="/path/to/connexus-api.min.js"></script>
-```
-
-## Quick Start
-
-### 1. Create Your HTML Template
-
-Create HTML elements with example content. Mark the container and template items:
+### Quick Start
 
 ```html
+<!-- 1. Create HTML template with placeholder content -->
 <div id="events-list">
   <div class="event-card">
     <h3 class="event-title">Sample Event</h3>
     <span class="event-date">December 25, 2025</span>
-    <p class="event-description">This is example event text...</p>
+    <p class="event-description">This is example text...</p>
   </div>
 </div>
-```
 
-### 2. Initialize the Library
-
-```html
+<!-- 2. Include library and initialize -->
+<script src="https://clientapi.connexus.team/src/connexus-api.js"></script>
 <script>
   ConnexusAPI.init({
     apiKey: 'YOUR_API_KEY',
-
     events: {
       container: '#events-list',
       template: '.event-card',
@@ -55,90 +59,111 @@ Create HTML elements with example content. Mark the container and template items
 </script>
 ```
 
-### 3. Done!
+[Full JavaScript Documentation](public_html/docs/javascript-client.md)
 
-The library will fetch live data and replace your example content automatically.
+---
 
-## Configuration Options
+## PHP Integration (Server-Side)
 
-### Events
+Use this approach for server-side rendering with PHP and cURL.
 
-```javascript
-ConnexusAPI.init({
-  events: {
-    container: '#events-list',      // Container selector
-    template: '.event-card',        // Template item selector
-    limit: 10,                      // Max items to display
-    mapping: {
-      '.event-title': 'title',
-      '.event-date': 'date',
-      '.event-description': 'description',
-      '.event-location': 'location',
-      '.event-image': { attr: 'src', field: 'imageUrl' }
-    }
-  }
-});
+### Quick Start
+
+Create an include file (`components/events-data.php`):
+
+```php
+<?php
+// Fetch events from API
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://api.connexus.team/v1/events?limit=100');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+$allEvents = [];
+if ($httpCode === 200 && $response) {
+    $json = json_decode($response, true);
+    $allEvents = $json['data'] ?? [];
+}
 ```
 
-### Members
+Use in your page:
 
-```javascript
-ConnexusAPI.init({
-  members: {
-    container: '#members-grid',
-    template: '.member-card',
-    limit: 20,
-    mapping: {
-      '.member-name': 'name',
-      '.member-title': 'jobTitle',
-      '.member-avatar': { attr: 'src', field: 'avatarUrl' }
-    }
-  }
-});
+```php
+<?php
+include 'components/events-data.php';
+
+foreach ($allEvents as $event): ?>
+  <div class="event-card">
+    <h3><?php echo htmlspecialchars($event['title']); ?></h3>
+    <p><?php echo htmlspecialchars($event['date']); ?></p>
+  </div>
+<?php endforeach; ?>
 ```
 
-### Business Listings
+[Full PHP Documentation](public_html/docs/php-integration.md)
 
-```javascript
-ConnexusAPI.init({
-  businesses: {
-    container: '#business-directory',
-    template: '.business-item',
-    mapping: {
-      '.business-name': 'name',
-      '.business-category': 'category',
-      '.business-description': 'description',
-      '.business-phone': 'phone',
-      '.business-website': { attr: 'href', field: 'websiteUrl' }
-    }
-  }
-});
-```
+---
 
-## API Key
+## API Endpoints
 
-To use this library, you need an API key from Connexus:
+| Endpoint | Description |
+|----------|-------------|
+| `GET /v1/events` | Fetch events list |
+| `GET /v1/featured-events` | Fetch featured event |
+| `GET /v1/members` | Fetch members list |
+| `GET /v1/businesses` | Fetch business directory |
+| `POST /v1/join-events` | Submit event signup form |
+| `POST /v1/contact` | Submit contact form |
+
+Base URL: `https://api.connexus.team/v1`
+
+[Full API Reference](public_html/docs/api-reference.md)
+
+---
+
+## Getting an API Key
 
 1. Log in to your [connexus.team](https://connexus.team) account
 2. Navigate to Settings > API Access
 3. Generate a new API key
-4. Use the key in your initialization
+4. Use the key in your integration
+
+---
 
 ## Examples
 
-See the `/examples` directory for complete working examples:
+See the `/public_html/examples` directory for working examples:
 
-- `basic-events.html` - Simple events list
-- `member-directory.html` - Member grid layout
-- `business-listings.html` - Business directory
-- `full-integration.html` - Complete site integration
+- `basic-events.html` - Simple events list (JavaScript)
 
-## Browser Support
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [JavaScript Client](public_html/docs/javascript-client.md) | DOM-based integration guide |
+| [PHP Integration](public_html/docs/php-integration.md) | Server-side cURL guide |
+| [API Reference](public_html/docs/api-reference.md) | Complete endpoint documentation |
+
+---
+
+## Browser Support (JavaScript)
 
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+
+## PHP Requirements
+
+- PHP 7.0+
+- cURL extension enabled
+
+---
 
 ## License
 
@@ -146,6 +171,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- Documentation: https://docs.connexus.team/api
+- Documentation: https://clientapi.connexus.team/docs/
 - Issues: https://github.com/productdesignexperts/connexus_public_api/issues
 - Email: support@connexus.team

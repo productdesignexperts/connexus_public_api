@@ -1,6 +1,6 @@
 # Connexus Public API Client (PUBLIC/Open Source)
 
-> **IMPORTANT**: This is a **PUBLIC, OPEN-SOURCE** JavaScript library (MIT License). It is NOT the backend API.
+> **IMPORTANT**: This is a **PUBLIC, OPEN-SOURCE** client library (MIT License). It is NOT the backend API.
 
 ---
 
@@ -24,29 +24,64 @@
 
 | Repository | Purpose | Visibility |
 |------------|---------|------------|
-| **`connexus_public_api`** (THIS REPO) | Client JavaScript library for websites | **PUBLIC** - Open source (MIT) |
+| **`connexus_public_api`** (THIS REPO) | Client library for websites | **PUBLIC** - Open source (MIT) |
 | `api.connexus.team` | Backend PHP API server | **PRIVATE** - Proprietary |
 
 ---
 
-## What This Library Does
+## What This Library Provides
 
-This is a vanilla JavaScript library that website developers include in their sites to display Connexus data (events, members, businesses). It uses a **DOM template replacement pattern**:
+This repository provides **two integration methods** for displaying Connexus data on external websites:
 
-1. Developer creates HTML with example/placeholder content and CSS classes
-2. Developer includes this JS library
-3. Developer configures which CSS selectors map to which API data fields
-4. Library fetches real data from the backend API
-5. Library clones the template and populates it with real data
-6. Placeholder content is replaced with live database content
+### 1. JavaScript Client (DOM-based)
+- Vanilla JavaScript library
+- Client-side data fetching
+- DOM template replacement pattern
+- Location: `public_html/src/connexus-api.js`
+- Docs: `public_html/docs/javascript-client.md`
+
+### 2. PHP Integration (cURL-based)
+- Server-side data fetching using cURL
+- Returns PHP arrays for custom templating
+- Location: Documented patterns (not bundled files)
+- Docs: `public_html/docs/php-integration.md`
 
 ---
 
-## How Users Include This Library
+## File Structure
+
+```
+/var/www/clientapi.connexus.team/       (GIT REPO ROOT)
+├── CLAUDE.md                           # This file
+├── README.md                           # Public documentation
+├── LICENSE                             # MIT License
+├── .gitignore
+└── public_html/                        # Document root (Apache serves this)
+    ├── src/
+    │   └── connexus-api.js             # JavaScript library
+    ├── docs/                           # Documentation
+    │   ├── javascript-client.md        # JS DOM-based guide
+    │   ├── php-integration.md          # PHP cURL guide
+    │   └── api-reference.md            # API endpoint reference
+    ├── dist/                           # Minified builds (TODO)
+    └── examples/                       # Example implementations
+        └── basic-events.html
+```
+
+---
+
+## Integration Methods
+
+### JavaScript (DOM) Approach
+
+Website developers:
+1. Include the JS library from CDN
+2. Create HTML with placeholder content and CSS classes
+3. Configure which CSS selectors map to which API data fields
+4. Library fetches real data and populates templates
 
 ```html
 <script src="https://clientapi.connexus.team/src/connexus-api.js"></script>
-
 <script>
   ConnexusAPI.init({
     apiKey: 'their-api-key',
@@ -55,12 +90,30 @@ This is a vanilla JavaScript library that website developers include in their si
       template: '.event-card',
       mapping: {
         '.title': 'title',
-        '.date': 'date',
-        '.description': 'description'
+        '.date': 'date'
       }
     }
   });
 </script>
+```
+
+### PHP (cURL) Approach
+
+Website developers:
+1. Create PHP include files with cURL calls
+2. Fetch data server-side before page renders
+3. Use standard PHP templating with the returned arrays
+
+```php
+<?php
+// Include data fetcher
+include 'components/events-data.php';
+
+// $allEvents now contains API data
+foreach ($allEvents as $event):
+?>
+  <div class="event"><?php echo htmlspecialchars($event['title']); ?></div>
+<?php endforeach; ?>
 ```
 
 ---
@@ -70,71 +123,33 @@ This is a vanilla JavaScript library that website developers include in their si
 ```
 User's Website
     │
-    ├── includes this JS library
+    ├── JavaScript Method:
+    │   └── includes connexus-api.js
+    │       └── fetch() to API
     │
-    └── ConnexusAPI.init({ apiKey, mapping })
-                │
-                │ fetch()
-                ▼
-        https://api.connexus.team/v1/events
-                │
-                ▼
-            MongoDB (ococ_portal)
+    ├── PHP Method:
+    │   └── cURL requests to API
+    │
+    ▼
+https://api.connexus.team/v1/...
+    │
+    ▼
+MongoDB (ococ_portal)
 ```
 
 ---
 
-## File Structure
+## API Endpoints (called by this library)
 
-```
-/var/www/clientapi.connexus.team/       (GIT REPO ROOT)
-├── CLAUDE.md              # This file
-├── README.md              # Public documentation
-├── LICENSE                # MIT License
-├── .gitignore
-└── public_html/           # Document root (Apache serves this)
-    ├── src/
-    │   └── connexus-api.js    # Main library
-    ├── dist/              # Minified builds (TODO)
-    ├── docs/              # Additional docs
-    └── examples/          # Example implementations
-```
-
----
-
-## Current Implementation
-
-### ConnexusAPI Object
-
-- `init(options)` - Initialize with config
-- `config.baseUrl` - Default: `https://api.connexus.team/v1`
-- `config.apiKey` - User's API key
-- `config.debug` - Enable console logging
-
-### Supported Data Types
-
-- `events` - Calendar events
-- `members` - Member directory
-- `businesses` - Business listings
-
-### TODO
-
-- `refresh(type)` - Manual refresh (stub only)
-- `discounts` - Not yet implemented in JS
-- `announcements` - Not yet implemented in JS
-- Minified build in `dist/`
-
----
-
-## Backend API Endpoints (called by this library)
-
-| Endpoint | Returns |
-|----------|---------|
-| `GET https://api.connexus.team/v1/events` | Events list |
-| `GET https://api.connexus.team/v1/members` | Members list |
-| `GET https://api.connexus.team/v1/businesses` | Businesses list |
-| `GET https://api.connexus.team/v1/discounts` | Discounts list |
-| `GET https://api.connexus.team/v1/announcements` | Announcements list |
+| Endpoint | Method | Returns |
+|----------|--------|---------|
+| `/v1/events` | GET | Events list |
+| `/v1/featured-events` | GET | Featured event |
+| `/v1/members` | GET | Members list |
+| `/v1/businesses` | GET | Businesses list |
+| `/v1/businesses/:id` | GET | Single business |
+| `/v1/join-events` | POST | Form submission |
+| `/v1/contact` | POST | Form submission |
 
 ### Expected Response Format
 
@@ -144,6 +159,16 @@ User's Website
   "meta": { "total": 100, "limit": 20, "offset": 0 }
 }
 ```
+
+---
+
+## Documentation Files
+
+| File | Purpose |
+|------|---------|
+| `public_html/docs/javascript-client.md` | JavaScript DOM integration guide |
+| `public_html/docs/php-integration.md` | PHP cURL integration guide |
+| `public_html/docs/api-reference.md` | Complete API endpoint documentation |
 
 ---
 
@@ -163,7 +188,7 @@ tail -50 /var/log/apache2/clientapi.connexus.team_access.log
 
 | Repository | GitHub | Server Path | Purpose |
 |------------|--------|-------------|---------|
-| **connexus_public_api** (THIS) | `productdesignexperts/connexus_public_api` | `/var/www/clientapi.connexus.team` | JS client library |
+| **connexus_public_api** (THIS) | `productdesignexperts/connexus_public_api` | `/var/www/clientapi.connexus.team` | Client library |
 | ococ_site | `productdesignexperts/ococ_site` | `/var/www/ococsite.connexus.team` | Public website |
 | api.connexus.team | `productdesignexperts/api.connexus.team` | `/var/www/api.connexus.team` | Backend API |
 | myococ | `productdesignexperts/myococ` | `/var/www/myococ.connexus.team` | Dashboard & Admin |
@@ -194,7 +219,9 @@ tail -50 /var/log/apache2/clientapi.connexus.team_access.log
 │  clientapi        │                                    │
 │  .connexus.team   │─────── fetches data from ─────────┘
 │  (THIS REPO)      │
-│  JS Client Library│
+│  Client Library   │
+│  - JS (DOM)       │
+│  - PHP (cURL)     │
 └───────────────────┘
 ```
 
@@ -202,11 +229,20 @@ tail -50 /var/log/apache2/clientapi.connexus.team_access.log
 
 ## Development Guidelines
 
-1. **Vanilla JavaScript only** - No frameworks, no dependencies
+1. **Vanilla JavaScript only** - No frameworks, no dependencies for JS library
 2. **Framework-agnostic** - Must work with any website
 3. **This is PUBLIC** - Never include secrets or internal URLs
 4. **Git commits** - One-line summaries, no Claude attribution
 5. **License** - MIT (keep it open source)
+
+---
+
+## TODO
+
+- [ ] Minified build in `dist/`
+- [ ] `refresh(type)` method implementation in JS
+- [ ] Additional examples (members, businesses)
+- [ ] PHP example files
 
 ---
 
