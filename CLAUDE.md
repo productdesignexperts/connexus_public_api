@@ -11,9 +11,9 @@
 | **This Repo** | `connexus_public_api` |
 | **GitHub** | `git@github.com:productdesignexperts/connexus_public_api.git` |
 | **Server Path** | `/var/www/clientapi.connexus.team` |
+| **Document Root** | `/var/www/clientapi.connexus.team/public_html` |
 | **Public URL** | https://clientapi.connexus.team |
 | **Script URL** | https://clientapi.connexus.team/src/connexus-api.js |
-| **Alt Script URL** | https://ococsite.connexus.team/connexus_api/src/connexus-api.js |
 | **Visibility** | **PUBLIC** (open source, MIT) |
 | **Log Files** | `/var/log/apache2/clientapi.connexus.team_error.log` |
 | **Main Platform** | https://connexus.team |
@@ -87,17 +87,17 @@ User's Website
 ## File Structure
 
 ```
-/var/www/clientapi.connexus.team/       (THIS IS THE GIT REPO)
+/var/www/clientapi.connexus.team/       (GIT REPO ROOT)
 ├── CLAUDE.md              # This file
 ├── README.md              # Public documentation
 ├── LICENSE                # MIT License
 ├── .gitignore
-├── src/
-│   └── connexus-api.js    # Main library
-├── dist/                  # Minified builds (TODO)
-├── docs/                  # Additional docs
-├── examples/              # Example implementations
-└── public_html            # SYMLINK to self (for Apache)
+└── public_html/           # Document root (Apache serves this)
+    ├── src/
+    │   └── connexus-api.js    # Main library
+    ├── dist/              # Minified builds (TODO)
+    ├── docs/              # Additional docs
+    └── examples/          # Example implementations
 ```
 
 ---
@@ -147,21 +147,6 @@ User's Website
 
 ---
 
-## Symlink from ococsite
-
-This directory is symlinked from the public website for backwards compatibility:
-
-```
-/var/www/ococsite.connexus.team/public_html/connexus_api
-    → /var/www/clientapi.connexus.team (THIS DIR)
-```
-
-This means the JS library is accessible via both:
-- https://clientapi.connexus.team/src/connexus-api.js (primary)
-- https://ococsite.connexus.team/connexus_api/src/connexus-api.js (legacy/symlink)
-
----
-
 ## Log Files
 
 When debugging issues with this library being served:
@@ -202,10 +187,9 @@ tail -50 /var/log/apache2/clientapi.connexus.team_access.log
 │                   │   │                   │   │                   │
 │  Public Website   │   │  Member Dashboard │   │  Backend API      │
 │                   │   │  + Admin Panel    │   │  (PHP/MongoDB)    │
-└────────┬──────────┘   └───────────────────┘   └───────────────────┘
-         │                                               ▲
-         │ symlink                                       │
-         ▼                                               │
+└───────────────────┘   └───────────────────┘   └───────────────────┘
+                                                         ▲
+                                                         │
 ┌───────────────────┐                                    │
 │  clientapi        │                                    │
 │  .connexus.team   │─────── fetches data from ─────────┘
