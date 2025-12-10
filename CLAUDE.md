@@ -1,100 +1,194 @@
-# Connexus Public API - Client Library
+# Connexus Public API Client (PUBLIC/Open Source)
 
-## Project Overview
+> **IMPORTANT**: This is a **PUBLIC, OPEN-SOURCE** JavaScript library (MIT License). It is NOT the backend API.
 
-This is the **public client-side JavaScript library** for integrating [connexus.team](https://connexus.team) collaboration site data into any website. This repository is designed to be downloaded and used by third-party developers who want to display Connexus data (events, members, business listings, etc.) on their own websites.
+---
 
-## Architecture
+## Quick Reference
 
-### Two-Repository System
+| Item | Value |
+|------|-------|
+| **This Repo** | `connexus_public_api` |
+| **GitHub** | `git@github.com:productdesignexperts/connexus_public_api.git` |
+| **Server Path** | `/var/www/ococsite.connexus.team/connexus_api` |
+| **Public Script URL** | https://ococsite.connexus.team/connexus_api/src/connexus-api.js |
+| **Visibility** | **PUBLIC** (open source, MIT) |
+| **Log Files** | `/var/log/apache2/ococsite.connexus.team_error.log` |
+| **Main Platform** | https://connexus.team |
 
-1. **This Repository (Client)**: `connexus_public_api` - Public JavaScript library that website developers include in their sites
-2. **Backend Repository (Private)**: Separate repository containing the API server that serves data from the Connexus database
+---
 
-### How It Works
+## Repository Distinction
 
-The integration follows a **DOM template replacement pattern**:
+| Repository | Purpose | Visibility |
+|------------|---------|------------|
+| **`connexus_public_api`** (THIS REPO) | Client JavaScript library for websites | **PUBLIC** - Open source (MIT) |
+| `api.connexus.team` | Backend PHP API server | **PRIVATE** - Proprietary |
 
-1. Website developer creates HTML elements with example/placeholder content
-2. Developer marks these elements with specific CSS classes or IDs
-3. Developer includes the Connexus JS library and configures it
-4. On page load, the JS library:
-   - Identifies the template elements (the examples)
-   - Fetches real data from the Connexus API backend
-   - Clears the example content
-   - Populates the DOM with actual data from connexus.team
+---
 
-### Example Usage Pattern
+## What This Library Does
+
+This is a vanilla JavaScript library that website developers include in their sites to display Connexus data (events, members, businesses). It uses a **DOM template replacement pattern**:
+
+1. Developer creates HTML with example/placeholder content and CSS classes
+2. Developer includes this JS library
+3. Developer configures which CSS selectors map to which API data fields
+4. Library fetches real data from the backend API
+5. Library clones the template and populates it with real data
+6. Placeholder content is replaced with live database content
+
+---
+
+## How Users Include This Library
 
 ```html
-<!-- Developer creates a template structure -->
-<div class="connexus-events-container">
-  <div class="connexus-event-item" data-connexus-template>
-    <h3 class="event-title">Example Event Title</h3>
-    <p class="event-date">January 1, 2025</p>
-    <p class="event-description">This is placeholder text...</p>
-  </div>
-</div>
+<script src="https://ococsite.connexus.team/connexus_api/src/connexus-api.js"></script>
 
-<!-- Include the library -->
-<script src="connexus-api.js"></script>
 <script>
   ConnexusAPI.init({
-    apiKey: 'your-api-key',
+    apiKey: 'their-api-key',
     events: {
-      container: '.connexus-events-container',
-      template: '.connexus-event-item',
+      container: '.events-list',
+      template: '.event-card',
       mapping: {
-        '.event-title': 'title',
-        '.event-date': 'date',
-        '.event-description': 'description'
+        '.title': 'title',
+        '.date': 'date',
+        '.description': 'description'
       }
     }
   });
 </script>
 ```
 
-## Directory Structure
+---
+
+## Data Flow
 
 ```
-connexus_api/           # This repository
-├── CLAUDE.md           # This file - AI context documentation
-├── README.md           # Public documentation for developers
+User's Website
+    │
+    ├── includes this JS library
+    │
+    └── ConnexusAPI.init({ apiKey, mapping })
+                │
+                │ fetch()
+                ▼
+        https://api.connexus.team/v1/events
+                │
+                ▼
+            MongoDB (ococ_portal)
+```
+
+---
+
+## File Structure
+
+```
+/var/www/ococsite.connexus.team/connexus_api/
+├── CLAUDE.md              # This file
+├── README.md              # Public documentation
+├── LICENSE                # MIT License
+├── .gitignore
 ├── src/
-│   └── connexus-api.js # Main JavaScript library
-├── dist/               # Built/minified files for production
-├── examples/           # Example implementations
-└── docs/               # Additional documentation
-
-../public_html/         # Example website using this API (sibling directory)
-                        # Serves as a reference implementation
+│   └── connexus-api.js    # Main library (174 lines)
+├── dist/                  # Minified builds (TODO)
+├── docs/                  # Additional docs
+└── examples/              # Example implementations
 ```
 
-## Data Types Supported
+---
 
-- **Events**: Community events, meetups, workshops
-- **Members**: User profiles and member directories
-- **Business Listings**: Local business information
-- **[Future]**: Additional data types as needed
+## Current Implementation
 
-## Development Notes
+### ConnexusAPI Object
 
-- This is a **public, open-source** project
-- The library should be framework-agnostic (vanilla JS)
-- Must work with any website that can include JavaScript
-- The companion example site at `../public_html` demonstrates integration
-- Backend API is hosted separately and serves JSON data
+- `init(options)` - Initialize with config
+- `config.baseUrl` - Default: `https://api.connexus.team/v1`
+- `config.apiKey` - User's API key
+- `config.debug` - Enable console logging
 
-## Key Design Principles
+### Supported Data Types
 
-1. **Zero Dependencies**: Pure vanilla JavaScript for maximum compatibility
-2. **Template-Based**: Works with developer's existing HTML structure
-3. **Non-Invasive**: Doesn't require specific HTML structure, adapts to what's provided
-4. **Configurable**: Flexible mapping between data fields and DOM elements
-5. **Graceful Degradation**: Example content shows if API is unavailable
+- `events` - Calendar events
+- `members` - Member directory
+- `businesses` - Business listings
 
-## Related Resources
+### TODO
 
-- Main site: https://connexus.team
-- Example implementation: `../public_html` directory
-- Backend API: (separate private repository)
+- `refresh(type)` - Manual refresh (stub only)
+- `discounts` - Not yet implemented in JS
+- `announcements` - Not yet implemented in JS
+- Minified build in `dist/`
+
+---
+
+## Backend API Endpoints (called by this library)
+
+| Endpoint | Returns |
+|----------|---------|
+| `GET https://api.connexus.team/v1/events` | Events list |
+| `GET https://api.connexus.team/v1/members` | Members list |
+| `GET https://api.connexus.team/v1/businesses` | Businesses list |
+| `GET https://api.connexus.team/v1/discounts` | Discounts list |
+| `GET https://api.connexus.team/v1/announcements` | Announcements list |
+
+### Expected Response Format
+
+```json
+{
+  "data": [...],
+  "meta": { "total": 100, "limit": 20, "offset": 0 }
+}
+```
+
+---
+
+## Symlink
+
+This directory is symlinked into the public website:
+
+```
+/var/www/ococsite.connexus.team/public_html/connexus_api
+    → /var/www/ococsite.connexus.team/connexus_api (THIS DIR)
+```
+
+---
+
+## Log Files
+
+When debugging issues with this library being served:
+
+```bash
+# Check for 404s or access issues
+tail -50 /var/log/apache2/ococsite.connexus.team_error.log
+tail -50 /var/log/apache2/ococsite.connexus.team_access.log
+```
+
+---
+
+## Related Repositories
+
+| Repository | GitHub | Server Path |
+|------------|--------|-------------|
+| **connexus_public_api** (THIS) | `productdesignexperts/connexus_public_api` | `/var/www/ococsite.connexus.team/connexus_api` |
+| api.connexus.team | `productdesignexperts/api.connexus.team` | `/var/www/api.connexus.team` |
+| myococ | `productdesignexperts/myococ` | `/var/www/myococ.connexus.team/public_html` |
+| ococ_site | `productdesignexperts/ococ_site` | `/var/www/ococsite.connexus.team/public_html` |
+
+---
+
+## Development Guidelines
+
+1. **Vanilla JavaScript only** - No frameworks, no dependencies
+2. **Framework-agnostic** - Must work with any website
+3. **This is PUBLIC** - Never include secrets or internal URLs
+4. **Git commits** - One-line summaries, no Claude attribution
+5. **License** - MIT (keep it open source)
+
+---
+
+## Owner
+
+- **User**: vince
+- **GitHub**: github.com/productdesignexperts/
