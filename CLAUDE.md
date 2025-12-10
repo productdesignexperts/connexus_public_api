@@ -10,10 +10,12 @@
 |------|-------|
 | **This Repo** | `connexus_public_api` |
 | **GitHub** | `git@github.com:productdesignexperts/connexus_public_api.git` |
-| **Server Path** | `/var/www/ococsite.connexus.team/connexus_api` |
-| **Public Script URL** | https://ococsite.connexus.team/connexus_api/src/connexus-api.js |
+| **Server Path** | `/var/www/clientapi.connexus.team` |
+| **Public URL** | https://clientapi.connexus.team |
+| **Script URL** | https://clientapi.connexus.team/src/connexus-api.js |
+| **Alt Script URL** | https://ococsite.connexus.team/connexus_api/src/connexus-api.js |
 | **Visibility** | **PUBLIC** (open source, MIT) |
-| **Log Files** | `/var/log/apache2/ococsite.connexus.team_error.log` |
+| **Log Files** | `/var/log/apache2/clientapi.connexus.team_error.log` |
 | **Main Platform** | https://connexus.team |
 
 ---
@@ -43,7 +45,7 @@ This is a vanilla JavaScript library that website developers include in their si
 ## How Users Include This Library
 
 ```html
-<script src="https://ococsite.connexus.team/connexus_api/src/connexus-api.js"></script>
+<script src="https://clientapi.connexus.team/src/connexus-api.js"></script>
 
 <script>
   ConnexusAPI.init({
@@ -85,16 +87,17 @@ User's Website
 ## File Structure
 
 ```
-/var/www/ococsite.connexus.team/connexus_api/
+/var/www/clientapi.connexus.team/       (THIS IS THE GIT REPO)
 ├── CLAUDE.md              # This file
 ├── README.md              # Public documentation
 ├── LICENSE                # MIT License
 ├── .gitignore
 ├── src/
-│   └── connexus-api.js    # Main library (174 lines)
+│   └── connexus-api.js    # Main library
 ├── dist/                  # Minified builds (TODO)
 ├── docs/                  # Additional docs
-└── examples/              # Example implementations
+├── examples/              # Example implementations
+└── public_html            # SYMLINK to self (for Apache)
 ```
 
 ---
@@ -144,14 +147,18 @@ User's Website
 
 ---
 
-## Symlink
+## Symlink from ococsite
 
-This directory is symlinked into the public website:
+This directory is symlinked from the public website for backwards compatibility:
 
 ```
 /var/www/ococsite.connexus.team/public_html/connexus_api
-    → /var/www/ococsite.connexus.team/connexus_api (THIS DIR)
+    → /var/www/clientapi.connexus.team (THIS DIR)
 ```
+
+This means the JS library is accessible via both:
+- https://clientapi.connexus.team/src/connexus-api.js (primary)
+- https://ococsite.connexus.team/connexus_api/src/connexus-api.js (legacy/symlink)
 
 ---
 
@@ -161,20 +168,51 @@ When debugging issues with this library being served:
 
 ```bash
 # Check for 404s or access issues
-tail -50 /var/log/apache2/ococsite.connexus.team_error.log
-tail -50 /var/log/apache2/ococsite.connexus.team_access.log
+tail -50 /var/log/apache2/clientapi.connexus.team_error.log
+tail -50 /var/log/apache2/clientapi.connexus.team_access.log
 ```
 
 ---
 
 ## Related Repositories
 
-| Repository | GitHub | Server Path |
-|------------|--------|-------------|
-| **connexus_public_api** (THIS) | `productdesignexperts/connexus_public_api` | `/var/www/ococsite.connexus.team/connexus_api` |
-| api.connexus.team | `productdesignexperts/api.connexus.team` | `/var/www/api.connexus.team` |
-| myococ | `productdesignexperts/myococ` | `/var/www/myococ.connexus.team/public_html` |
-| ococ_site | `productdesignexperts/ococ_site` | `/var/www/ococsite.connexus.team/public_html` |
+| Repository | GitHub | Server Path | Purpose |
+|------------|--------|-------------|---------|
+| **connexus_public_api** (THIS) | `productdesignexperts/connexus_public_api` | `/var/www/clientapi.connexus.team` | JS client library |
+| ococ_site | `productdesignexperts/ococ_site` | `/var/www/ococsite.connexus.team` | Public website |
+| api.connexus.team | `productdesignexperts/api.connexus.team` | `/var/www/api.connexus.team` | Backend API |
+| myococ | `productdesignexperts/myococ` | `/var/www/myococ.connexus.team` | Dashboard & Admin |
+
+---
+
+## Architecture Overview
+
+```
+                    ┌─────────────────────────────────────┐
+                    │         connexus.team               │
+                    │      (Main Platform Entry)          │
+                    └─────────────────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+        ▼                           ▼                           ▼
+┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+│  ococsite         │   │  myococ           │   │  api.connexus     │
+│  .connexus.team   │   │  .connexus.team   │   │  .team            │
+│                   │   │                   │   │                   │
+│  Public Website   │   │  Member Dashboard │   │  Backend API      │
+│                   │   │  + Admin Panel    │   │  (PHP/MongoDB)    │
+└────────┬──────────┘   └───────────────────┘   └───────────────────┘
+         │                                               ▲
+         │ symlink                                       │
+         ▼                                               │
+┌───────────────────┐                                    │
+│  clientapi        │                                    │
+│  .connexus.team   │─────── fetches data from ─────────┘
+│  (THIS REPO)      │
+│  JS Client Library│
+└───────────────────┘
+```
 
 ---
 
