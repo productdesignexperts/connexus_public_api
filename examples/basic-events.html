@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexus Events - Basic Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .event-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .event-title {
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+    .event-date {
+      color: #666;
+      font-size: 14px;
+    }
+    .event-description {
+      color: #555;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upcoming Events</h1>
+
+  <!-- Events Container -->
+  <div id="events-list">
+    <!-- Template item - this will be cloned for each event -->
+    <div class="event-card">
+      <h2 class="event-title">Example Event Title</h2>
+      <span class="event-date">January 15, 2025</span>
+      <p class="event-description">
+        This is placeholder text for the event description.
+        It will be replaced with real data from Connexus.
+      </p>
+    </div>
+  </div>
+
+  <!-- Include the Connexus API library -->
+  <script src="../src/connexus-api.js"></script>
+  <script>
+    // Initialize with your configuration
+    ConnexusAPI.init({
+      apiKey: 'YOUR_API_KEY_HERE',
+      debug: true,
+
+      events: {
+        container: '#events-list',
+        template: '.event-card',
+        limit: 5,
+        mapping: {
+          '.event-title': 'title',
+          '.event-date': 'date',
+          '.event-description': 'description'
+        }
+      }
+    });
+  </script>
+</body>
+</html>
